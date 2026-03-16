@@ -1,0 +1,2 @@
+# Para que pueda funcionar en cualquier máquina apuntamos a la dirección de loopback, ejecutamos ansible en modo local por que está instalado en la misma maquina virtual
+127.0.0.1 ansible_connection=local

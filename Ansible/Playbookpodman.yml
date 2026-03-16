@@ -1,0 +1,32 @@
+# Playbook para instalar podman y ejecutar el nginx
+---
+# Esta parte elige los hosts y con el become true ejecuta los comandos en modo de sudo, como solo tenemos un host podemos poner all
+
+- name: podman con nginx
+  hosts: all
+  become: true
+
+  tasks:
+
+      # Aquí estamos actualizando como si fuera un apt update, por si no encuentra el podman
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      # En esta parte nos aseguramos de que podman esté instalado con el state: present y de lo contrario lo instalamos
+    - name: Instalar podman
+      apt:
+        name: podman
+        state: present
+      # Descargamos la imagen de nginx desde dockerhub si no existe (esto tambien se comprueba con el state: present)
+    - name: Pull nginx container image
+      containers.podman.podman_image:
+        name: docker.io/library/nginx
+        state: present
+      # Creamos y ejecutamos el contenedor de nginx
+    - name: Run nginx container
+      containers.podman.podman_container:
+        name: nginx
+        image: docker.io/library/nginx
+        state: started
+        ports:
+          - "80:80"
