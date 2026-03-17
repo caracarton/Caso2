@@ -1,7 +1,7 @@
 #creamos un grupo de recursos en azure
 resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
-  location = var.location_name
+  location = var.location
 }
 #configuramos la red virtual donde estará la máquina
 resource "azurerm_virtual_network" "vnet" {
@@ -50,8 +50,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
   ]
 #elegimos el archivo de ssh necesario para conectarnos
   admin_ssh_key {
-    username   = "azureuser"
-    public_key = file("C:/Users/sergi/Downloads/Terraform/id_rsa.pub")
+    username   = var.ssh_user
+    public_key = file(var.public_key_path)
   }
 #configuramos el disco de la máquina
   os_disk {
