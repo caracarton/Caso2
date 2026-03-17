@@ -1,1 +1,2 @@
 Carpetas con todo lo necesario para montar terraform y ansible
+nota: ubuntu.tf es el equivalente a recursos.tf que has pedido, me he dado cuenta muy tarde como para cambiar el nombre pero no creo que sea muy importante
