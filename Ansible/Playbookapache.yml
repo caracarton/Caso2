@@ -1,0 +1,74 @@
+---
+#Igual que antes nos ponemos los permisos de administrador con el become true y usamos el hosts all
+- name: Crear contenedor Apache con autenticacion
+  hosts: all
+  become: true
+
+#Creamos las variables necesarias para el apache
+  vars:
+    apache_dir: /home/azureuser/apache-contenido
+    image_name: apache
+    image_tag: casopractico2
+    web_user: apache
+    web_password: contraseña1234
+
+  tasks:
+
+#instalamos la dependencia de apache para usar el htpasswd solo si no está ya instalada, al igual que antes usamos state present para verificar si ya está instalado
+    - name: Instalar apache
+      apt:
+       name:
+          - apache2-utils
+       state: present
+
+#Creamos el directorio para la imagen de apache y le damos permisos, para esto estamos usando la variable de antes y con el mode le damos los permisos al directorio. también usamos el path para ahorrar poner rutas completas más adelante
+    - name: Crear directorio para el contenedor
+      file:
+        path: "{{ apache_dir }}"
+        state: directory
+        mode: '0755'
+
+#Con el dest estamos haciendo el equivalente al nano, el content es como dice su nombre el contenido del archivo que estamos creando.
+    - name: Crear pagina web simple
+      copy:
+        dest: "{{ apache_dir }}/index.html"
+        content: |
+          <html>
+          <head><title>PRUEBA DE APACHE</title></head>
+          <body>
+          <h1>Prueba con contraseña</h1>
+          <p>Acceso correcto</p>
+          </body>
+          </html>
+
+#En esta parte creamos el archivo htpasswd con las variables de antes de forma en la que quede con el contenido "apache contraseña1234", esto nos dejará autenticar al acceder desde internet.
+    - name: Crear archivo htpasswd
+      command: >
+        htpasswd -bc {{ apache_dir }}/.htpasswd {{ web_user }} {{ web_password }}
+
+#Aquí estamos creando la imagen de apache, usamos el equivalente de nano con el copy para crear el Containerfile que es lo que podman busca por defecto  y luego le introducimos lo que necesita apache para funcionar. Epezamos por el FROM htpd: 2.4 que es la imagen oficia>#copiamos el index.html al htdocs de apache, luego copia el .htpasswd.
+#en el RUN, primera linea estamos añadiendo la regla de usar autenticación básica de HTTP, en el segundo echo hacemos que en el navegador salga restricted al intentar acceder, en el tercero indicamos donde está el archivo con nombres y contraseñas y en el cuarto hacemos>#como nota los >> se usan para añadir texto al archivo, si solo pusieramos un > borramos todo el contenido para introducir lo que acabamos de escribir.
+# los && son para solo ejecutar los siguientes comandos solo si el anterior ha funcionado (lo he usado para las pruebas) el \ es para concatenar los comandos
+    - name: Crear Containerfile
+      copy:
+        dest: "{{ apache_dir }}/Containerfile"
+        content: |
+          FROM docker.io/library/httpd:2.4
+
+          COPY index.html /usr/local/apache2/htdocs/index.html
+          COPY .htpasswd /usr/local/apache2/conf/.htpasswd
+
+          RUN echo "<Directory \"/usr/local/apache2/htdocs\">" >> /usr/local/apache2/conf/httpd.conf && \
+              echo "AuthType Basic" >> /usr/local/apache2/conf/httpd.conf && \
+              echo "AuthName \"Restricted\"" >> /usr/local/apache2/conf/httpd.conf && \
+              echo "AuthUserFile /usr/local/apache2/conf/.htpasswd" >> /usr/local/apache2/conf/httpd.conf && \
+              echo "Require valid-user" >> /usr/local/apache2/conf/httpd.conf && \
+              echo "</Directory>" >> /usr/local/apache2/conf/httpd.conf
+
+#En esta parte creamos la imagen
+    - name: Construir imagen de contenedor Apache
+      containers.podman.podman_image:
+        name: "{{ image_name }}"
+        tag: "{{ image_tag }}"
+        path: "{{ apache_dir }}"
+        state: build
