@@ -26,3 +26,13 @@ variable "ssh_user" {
   description = "Usuario para hacer ssh"
   default = "azureuser"
 }
+#Nombre del AKS
+variable "aks_name" {
+  type    = string
+  default = "testaks1sergiomiralles"
+}
+#Prefijo DNS de aks
+variable "aks_dns_prefix" {
+  type    = string
+  default = "testaks1sergiomiralles"
+}
