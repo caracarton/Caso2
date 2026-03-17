@@ -1,0 +1,29 @@
+---
+- name: Subir imagen Apache a ACR
+  hosts: vm
+  become: true
+
+  vars:
+    acr_login_server: testacr1sergiomiralles.azurecr.io
+    acr_username: testacr1sergiomiralles
+    acr_password: "96qKi0Q3NjKDuNUcjbxDCAK8blVZFPwxYUuLGMB55kz3NzekiXL0JQQJ99CCAChHRaEEqg7NAAACAZCRnlRK"
+    image_name: apache
+    image_tag: casopractico2
+
+  tasks:
+
+    - name: Login en ACR con podman
+      containers.podman.podman_login:
+        registry: "{{ acr_login_server }}"
+        username: "{{ acr_username }}"
+        password: "{{ acr_password }}"
+
+    - name: Etiquetar imagen para ACR
+      command: >
+        podman tag {{ image_name }}:{{ image_tag }}
+        {{ acr_login_server }}/{{ image_name }}:{{ image_tag }}
+
+    - name: Subir imagen al ACR
+      command: >
+        podman push
+        {{ acr_login_server }}/{{ image_name }}:{{ image_tag }}
