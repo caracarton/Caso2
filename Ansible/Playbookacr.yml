@@ -1,8 +1,10 @@
 ---
+#Empezamos como siempre por elegir nuestro host y poniendo los permisos de sudo
 - name: Subir imagen Apache a ACR
-  hosts: vm
+  hosts: all
   become: true
 
+#Definimos las variables necesarias
   vars:
     acr_login_server: testacr1sergiomiralles.azurecr.io
     acr_username: testacr1sergiomiralles
@@ -12,17 +14,20 @@
 
   tasks:
 
+#Hacemos el login del acr mediante podman
     - name: Login en ACR con podman
       containers.podman.podman_login:
         registry: "{{ acr_login_server }}"
         username: "{{ acr_username }}"
         password: "{{ acr_password }}"
 
+#Necesitamos etiquetar la imagen como casopractico2, para esto tengo que usar el command para usar la el comando de etiquetado de podman...
     - name: Etiquetar imagen para ACR
       command: >
         podman tag {{ image_name }}:{{ image_tag }}
         {{ acr_login_server }}/{{ image_name }}:{{ image_tag }}
 
+#Luego tenemos que subir la imagen a acr usando el comando push del propio podman, de nuevo tenemos que usar command de ansible
     - name: Subir imagen al ACR
       command: >
         podman push
