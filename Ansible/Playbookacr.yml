@@ -4,7 +4,7 @@
   hosts: all
   become: true
 
-#Definimos las variables necesarias
+#Definimos las variables necesarias, en un entorno real nunca pondríamos la contraseña en texto plano, usaríamos secretos
   vars:
     acr_login_server: testacr1sergiomiralles.azurecr.io
     acr_username: testacr1sergiomiralles
